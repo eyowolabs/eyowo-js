@@ -1,24 +1,18 @@
 import axios, { AxiosInstance } from 'axios';
 import CryptoJS from 'crypto-js';
 
-const ENVIRONMENTS = {
-  PRODUCTION: 'production',
-  STAGING: 'staging',
-  SANDBOX: 'sandbox',
-};
-
-const BASE_URLS = {
-  PRODUCTION: 'https://api.console.eyowo.com',
-  STAGING: 'http://52.6.208.160:9193',
-  SANDBOX: 'https://api.sandbox.developer.eyowo.com',
-};
-
-const FACTORS = { SMS: 'sms' };
-
 export class Client {
-  private environment: string;
+  private static BASE_URLS = {
+    PRODUCTION: 'https://api.console.eyowo.com',
+    SANDBOX: 'https://api.sandbox.developer.eyowo.com',
+    STAGING: 'http://52.6.208.160:9193',
+  };
 
-  private appKey: string;
+  private static ENVIRONMENTS = {
+    PRODUCTION: 'production',
+    SANDBOX: 'sandbox',
+    STAGING: 'staging',
+  };
 
   private appSecret: string;
 
@@ -31,138 +25,84 @@ export class Client {
     if (!appSecret) {
       throw new Error('App secret is required');
     }
-    if (environment && !Object.values(ENVIRONMENTS).includes(environment)) {
+    if (environment && !Object.values(Client.ENVIRONMENTS).includes(environment)) {
       throw new Error('Invalid environment');
     }
 
-    this.environment = environment || ENVIRONMENTS.PRODUCTION;
-    this.appKey = appKey;
-    this.appSecret = appSecret;
-
-    let baseURL = BASE_URLS.PRODUCTION;
+    let baseURL = Client.BASE_URLS.PRODUCTION;
     switch (environment) {
-      case ENVIRONMENTS.PRODUCTION:
-        baseURL = BASE_URLS.PRODUCTION;
+      case Client.ENVIRONMENTS.PRODUCTION:
+        baseURL = Client.BASE_URLS.PRODUCTION;
         break;
-      case ENVIRONMENTS.SANDBOX:
-        baseURL = BASE_URLS.SANDBOX;
+      case Client.ENVIRONMENTS.SANDBOX:
+        baseURL = Client.BASE_URLS.SANDBOX;
         break;
-      case ENVIRONMENTS.STAGING:
-        baseURL = BASE_URLS.STAGING;
+      case Client.ENVIRONMENTS.STAGING:
+        baseURL = Client.BASE_URLS.STAGING;
+        break;
+      default:
+        baseURL = Client.BASE_URLS.PRODUCTION;
         break;
     }
 
-    this.axiosInstance = axios.create({ baseURL });
+    this.appSecret = appSecret;
+    const axiosInstance = axios.create({ baseURL });
+    axiosInstance.defaults.headers.common['X-App-Key'] = appKey;
+    this.axiosInstance = axiosInstance;
   }
 
-  generateAuthData({ message }: { message: string }) {
-    const iv = CryptoJS.lib.WordArray.random(16).toString();
-    return {
-      authData: CryptoJS.AES.encrypt(message, CryptoJS.enc.Base64.parse(this.appSecret), {
-        iv: CryptoJS.enc.Base64.parse(iv),
-      }).toString(),
-      iv,
-    };
+  public async validateUser({ mobile }: IValidateUserReq) {
+    return this.__makeRequest({
+      messageData: { mobile },
+      url: '/v1/users/auth/validate',
+    });
   }
 
-  Auth = {
-    validateUser: async ({ mobile }: { mobile: string }) => {
-      const { authData, iv } = this.generateAuthData({
-        message: JSON.stringify({ mobile }),
-      });
+  public async authenticateUser({ mobile, factor, passcode }: IAuthenticateUserReq) {
+    return this.__makeRequest({
+      messageData: { mobile, factor, passcode },
+      url: '/v1/users/auth',
+    });
+  }
 
-      try {
-        const req = await this.axiosInstance.post(
-          '/v1/users/auth/validate',
-          { authData },
-          { headers: { 'X-App-Key': this.appKey, 'X-IV': iv } },
-        );
-        return req.data;
-      } catch (error) {
-        if (error.response) return error.response.data;
-        throw error;
-      }
-    },
-    authenticateUser: async ({ mobile, factor, passcode }: IAuthenticateUser) => {
-      if (!Object.values(FACTORS).includes(factor)) {
-        throw new Error('Invalid authentication factor');
-      }
-
-      const { authData, iv } = this.generateAuthData({
-        message: JSON.stringify({ mobile, factor, passcode }),
-      });
-
-      try {
-        const req = await this.axiosInstance.post(
-          '/v1/users/auth',
-          { authData },
-          { headers: { 'X-App-Key': this.appKey, 'X-IV': iv } },
-        );
-        return req.data;
-      } catch (error) {
-        if (error.response) return error.response.data;
-        throw error;
-      }
-    },
-  };
-
-  Users = {
-    getBalance: async ({ mobile, accessToken }: { mobile: string; accessToken: string }) => {
-      const { authData, iv } = this.generateAuthData({
-        message: JSON.stringify({ mobile }),
-      });
-
-      try {
-        const req = await this.axiosInstance.post(
-          '/v1/users/balance',
-          { authData },
-          {
-            headers: {
-              'X-App-Key': this.appKey,
-              'X-IV': iv,
-              'X-App-Wallet-Access-Token': accessToken,
-            },
-            params: { authData },
-          },
-        );
-        return req.data;
-      } catch (error) {
-        if (error.response) return error.response.data;
-        throw error;
-      }
-    },
-    transferToPhone: async ({
-      mobile,
-      amount,
+  public async getBalance({ mobile, accessToken }: IGetUserBalanceReq) {
+    return this.__makeRequest({
       accessToken,
-    }: {
-    mobile: string;
-    amount: number;
-    accessToken: string;
-    }) => {
-      const { authData, iv } = this.generateAuthData({
-        message: JSON.stringify({ mobile, amount }),
-      });
+      messageData: { mobile },
+      url: '/v1/users/balance',
+    });
+  }
 
-      try {
-        const req = await this.axiosInstance.post(
-          '/v1/users/transfers/phone',
-          { authData },
-          {
-            headers: {
-              'X-App-Key': this.appKey,
-              'X-IV': iv,
-              'X-App-Wallet-Access-Token': accessToken,
-            },
-          },
-        );
-        return req.data;
-      } catch (error) {
-        if (error.response) return error.response.data;
+  public async transferToPhone({ accessToken, amount, mobile }: ITransferToPhoneReq) {
+    return this.__makeRequest({
+      accessToken,
+      messageData: { mobile, amount },
+      url: '/v1/users/transfers/phone',
+    });
+  }
+
+  private async __makeRequest({ url, messageData, accessToken }: IMakeRequest) {
+    const iv = CryptoJS.lib.WordArray.random(16).toString();
+    const authData = CryptoJS.AES.encrypt(
+      JSON.stringify(messageData),
+      CryptoJS.enc.Base64.parse(this.appSecret),
+      { iv: CryptoJS.enc.Base64.parse(iv) },
+    ).toString();
+
+    const headers: { [key: string]: string } = { 'X-IV': iv };
+    if (accessToken) {
+      headers['X-App-Wallet-Access-Token'] = accessToken;
+    }
+    return this.axiosInstance
+      .post(url, { authData }, { headers })
+      .then((data) => data.data)
+      .catch((error) => {
+        if (error.response) {
+          return error.response.data;
+        }
         throw error;
-      }
-    },
-  };
+      });
+  }
 }
 
 interface IClientConstructor {
@@ -171,8 +111,29 @@ interface IClientConstructor {
   environment?: string;
 }
 
-interface IAuthenticateUser {
+interface IMakeRequest {
+  url: string;
+  messageData: object;
+  accessToken?: string;
+}
+
+interface IAuthenticateUserReq {
   mobile: string;
   factor: string;
   passcode?: string;
+}
+
+interface IValidateUserReq {
+  mobile: string;
+}
+
+interface IGetUserBalanceReq {
+  mobile: string;
+  accessToken: string;
+}
+
+interface ITransferToPhoneReq {
+  mobile: string;
+  amount: number;
+  accessToken: string;
 }

@@ -13,7 +13,7 @@ describe('CLIENT', () => {
 
   test('should not create client without app key', async () => {
     const cl = () => {
-      new Eyowo.Client({
+      const client = new Eyowo.Client({
         appSecret: 'zvze3bfmev5pxhexuzsjcrn6pjqwbspgnh43de9nkvkjeeq45qemudmzyvpanv5k',
         environment: 'sandbox',
       });
@@ -24,7 +24,7 @@ describe('CLIENT', () => {
 
   test('should not create client without app secret', async () => {
     const cl = () => {
-      new Eyowo.Client({
+      const client = new Eyowo.Client({
         appKey: 'ru6nmdqf9cqpyvz7b4ce2kj938w5gc3r',
         environment: 'sandbox',
       });
@@ -33,7 +33,7 @@ describe('CLIENT', () => {
     expect(cl).toThrowError('App secret is required');
   });
 
-  test('should not create client without invalid environment', async () => {
+  test('should not create client with invalid environment', async () => {
     const cl = () => {
       new Eyowo.Client({
         appKey: 'ru6nmdqf9cqpyvz7b4ce2kj938w5gc3r',
@@ -46,7 +46,7 @@ describe('CLIENT', () => {
   });
 
   test('should validate a user', async () => {
-    const validateRequest = await client.Auth.validateUser({
+    const validateRequest = await client.validateUser({
       mobile: '2349090000000',
     });
     expect(validateRequest.success).toBe(true);
@@ -56,7 +56,7 @@ describe('CLIENT', () => {
   });
 
   test('should not validate a user with a wrong mobile number', async () => {
-    const validateRequest = await client.Auth.validateUser({
+    const validateRequest = await client.validateUser({
       mobile: '2349095800000',
     });
     expect(validateRequest.success).toBe(false);
@@ -64,7 +64,7 @@ describe('CLIENT', () => {
   });
 
   test('should send an authentication request for SMS', async () => {
-    const authRequest = await client.Auth.authenticateUser({
+    const authRequest = await client.authenticateUser({
       mobile: '2349090000000',
       factor: 'sms',
     });
@@ -74,16 +74,8 @@ describe('CLIENT', () => {
     );
   });
 
-  test('should not send an authentication request without an authentication factor', async () => {
-    const authRequest = client.Auth.authenticateUser({
-      mobile: '2349090000000',
-    });
-
-    expect(authRequest).rejects.toThrow('Invalid authentication factor');
-  });
-
   test('should not send an authentication request to an invalid phone number', async () => {
-    const authRequest = await client.Auth.authenticateUser({
+    const authRequest = await client.authenticateUser({
       mobile: '2349090000001',
       factor: 'sms',
     });
@@ -93,7 +85,7 @@ describe('CLIENT', () => {
   });
 
   test('should confirm an authentication request for SMS with valid passcode', async () => {
-    const authRequest = await client.Auth.authenticateUser({
+    const authRequest = await client.authenticateUser({
       mobile: '2349090000000',
       factor: 'sms',
       passcode: '111111',
@@ -107,7 +99,7 @@ describe('CLIENT', () => {
   });
 
   test('should not confirm an authentication request for SMS with invalid passcode', async () => {
-    const authRequest = await client.Auth.authenticateUser({
+    const authRequest = await client.authenticateUser({
       mobile: '2349090000000',
       factor: 'sms',
       passcode: '000000',
@@ -117,12 +109,12 @@ describe('CLIENT', () => {
   });
 
   test("should get a user's balance", async () => {
-    await client.Auth.authenticateUser({
+    await client.authenticateUser({
       mobile: '2349090000000',
       factor: 'sms',
     });
 
-    const validateReq = await client.Auth.authenticateUser({
+    const validateReq = await client.authenticateUser({
       mobile: '2349090000000',
       factor: 'sms',
       passcode: '111111',
@@ -130,7 +122,7 @@ describe('CLIENT', () => {
 
     const { accessToken } = validateReq.data;
 
-    const balanceReq = await client.Users.getBalance({
+    const balanceReq = await client.getBalance({
       mobile: '2349090000000',
       accessToken,
     });
@@ -143,12 +135,12 @@ describe('CLIENT', () => {
   });
 
   test('should transfer from a wallet to an Eyowo account', async () => {
-    await client.Auth.authenticateUser({
+    await client.authenticateUser({
       mobile: '2349090000000',
       factor: 'sms',
     });
 
-    const validateReq = await client.Auth.authenticateUser({
+    const validateReq = await client.authenticateUser({
       mobile: '2349090000000',
       factor: 'sms',
       passcode: '111111',
@@ -156,7 +148,7 @@ describe('CLIENT', () => {
 
     const { accessToken } = validateReq.data;
 
-    const transfersReq = await client.Users.transferToPhone({
+    const transfersReq = await client.transferToPhone({
       mobile: '2349090000000',
       amount: 1000000,
       accessToken,
