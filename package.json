@@ -1,0 +1,23 @@
+{
+  "name": "eyowo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "test-coverage": "jest --coverage"
+  },
+  "author": "Chidi Williams <chidi@softcom.ng>",
+  "license": "ISC",
+  "dependencies": {
+    "@types/crypto-js": "^3.1.43",
+    "axios": "^0.18.0",
+    "crypto-js": "^3.1.9-1"
+  },
+  "devDependencies": {
+    "eslint": "^5.12.1",
+    "jest": "^24.0.0",
+    "typescript": "^3.2.4"
+  }
+}
