@@ -81,6 +81,16 @@ export class Client {
     });
   }
 
+  public async buyVTU({
+    accessToken, mobile, amount, provider,
+  }: IBuyVTUReq) {
+    return this.__makeRequest({
+      accessToken,
+      messageData: { mobile, amount, provider },
+      url: '/v1/users/payments/bills/vtu',
+    });
+  }
+
   private async __makeRequest({ url, messageData, accessToken }: IMakeRequest) {
     const iv = CryptoJS.lib.WordArray.random(16).toString();
     const authData = CryptoJS.AES.encrypt(
@@ -136,4 +146,18 @@ interface ITransferToPhoneReq {
   mobile: string;
   amount: number;
   accessToken: string;
+}
+
+interface IBuyVTUReq {
+  mobile: string;
+  amount: number;
+  provider: VTUProviders;
+  accessToken: string;
+}
+
+enum VTUProviders {
+  'mtn',
+  'glo',
+  'airtel',
+  'etisalat',
 }
