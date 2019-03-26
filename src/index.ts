@@ -5,13 +5,11 @@ export class Client {
   private static BASE_URLS = {
     PRODUCTION: 'https://api.console.eyowo.com',
     SANDBOX: 'https://api.sandbox.developer.eyowo.com',
-    STAGING: 'http://52.6.208.160:9193',
   };
 
   private static ENVIRONMENTS = {
     PRODUCTION: 'production',
     SANDBOX: 'sandbox',
-    STAGING: 'staging',
   };
 
   private appSecret: string;
@@ -25,7 +23,10 @@ export class Client {
     if (!appSecret) {
       throw new Error('App secret is required');
     }
-    if (environment && !Object.values(Client.ENVIRONMENTS).includes(environment)) {
+    if (
+      environment &&
+      !Object.values(Client.ENVIRONMENTS).includes(environment)
+    ) {
       throw new Error('Invalid environment');
     }
 
@@ -36,9 +37,6 @@ export class Client {
         break;
       case Client.ENVIRONMENTS.SANDBOX:
         baseURL = Client.BASE_URLS.SANDBOX;
-        break;
-      case Client.ENVIRONMENTS.STAGING:
-        baseURL = Client.BASE_URLS.STAGING;
         break;
       default:
         baseURL = Client.BASE_URLS.PRODUCTION;
@@ -58,7 +56,11 @@ export class Client {
     });
   }
 
-  public async authenticateUser({ mobile, factor, passcode }: IAuthenticateUserReq) {
+  public async authenticateUser({
+    mobile,
+    factor,
+    passcode,
+  }: IAuthenticateUserReq) {
     return this.__makeRequest({
       messageData: { mobile, factor, passcode },
       url: '/v1/users/auth',
@@ -73,7 +75,11 @@ export class Client {
     });
   }
 
-  public async transferToPhone({ accessToken, amount, mobile }: ITransferToPhoneReq) {
+  public async transferToPhone({
+    accessToken,
+    amount,
+    mobile,
+  }: ITransferToPhoneReq) {
     return this.__makeRequest({
       accessToken,
       messageData: { mobile, amount },
@@ -81,9 +87,7 @@ export class Client {
     });
   }
 
-  public async buyVTU({
-    accessToken, mobile, amount, provider,
-  }: IBuyVTUReq) {
+  public async buyVTU({ accessToken, mobile, amount, provider }: IBuyVTUReq) {
     return this.__makeRequest({
       accessToken,
       messageData: { mobile, amount, provider },
