@@ -101,7 +101,7 @@ export class Client {
         amount,
         bankCode,
       },
-      url: '/v1/users/payments/bills/vtu',
+      url: '/v1/users/transfers/bank',
     });
   }
 
