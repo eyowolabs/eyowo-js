@@ -23,10 +23,7 @@ export class Client {
     if (!appSecret) {
       throw new Error('App secret is required');
     }
-    if (
-      environment &&
-      !Object.values(Client.ENVIRONMENTS).includes(environment)
-    ) {
+    if (environment && !Object.values(Client.ENVIRONMENTS).includes(environment)) {
       throw new Error('Invalid environment');
     }
 
@@ -56,11 +53,7 @@ export class Client {
     });
   }
 
-  public async authenticateUser({
-    mobile,
-    factor,
-    passcode,
-  }: IAuthenticateUserReq) {
+  public async authenticateUser({ mobile, factor, passcode }: IAuthenticateUserReq) {
     return this.__makeRequest({
       messageData: { mobile, factor, passcode },
       url: '/v1/users/auth',
@@ -75,11 +68,7 @@ export class Client {
     });
   }
 
-  public async transferToPhone({
-    accessToken,
-    amount,
-    mobile,
-  }: ITransferToPhoneReq) {
+  public async transferToPhone({ accessToken, amount, mobile }: ITransferToPhoneReq) {
     return this.__makeRequest({
       accessToken,
       messageData: { mobile, amount },
@@ -87,10 +76,31 @@ export class Client {
     });
   }
 
-  public async buyVTU({ accessToken, mobile, amount, provider }: IBuyVTUReq) {
+  public async buyVTU({
+    accessToken, mobile, amount, provider,
+  }: IBuyVTUReq) {
     return this.__makeRequest({
       accessToken,
       messageData: { mobile, amount, provider },
+      url: '/v1/users/payments/bills/vtu',
+    });
+  }
+
+  public async transferToBank({
+    accessToken,
+    amount,
+    accountName,
+    accountNumber,
+    bankCode,
+  }: ITransferToBankReq) {
+    return this.__makeRequest({
+      accessToken,
+      messageData: {
+        accountName,
+        accountNumber,
+        amount,
+        bankCode,
+      },
       url: '/v1/users/payments/bills/vtu',
     });
   }
@@ -164,4 +174,12 @@ enum VTUProviders {
   'glo',
   'airtel',
   'etisalat',
+}
+
+interface ITransferToBankReq {
+  accessToken: string;
+  amount: number;
+  accountName: string;
+  accountNumber: string;
+  bankCode: string;
 }
