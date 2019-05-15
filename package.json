@@ -1,6 +1,6 @@
 {
   "name": "eyowo-js",
-  "version": "1.1.3",
+  "version": "1.2.3",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
