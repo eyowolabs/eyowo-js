@@ -92,6 +92,8 @@ To complete the authentication the user needs to supply the the authentication O
       });
 ```
 
+**responses**
+
 ```shell
 {
     "success": true,
